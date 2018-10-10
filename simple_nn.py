@@ -11,6 +11,7 @@ from sklearn.utils  import class_weight
 from keras.callbacks import ModelCheckpoint
 from keras import regularizers
 from sklearn.model_selection import StratifiedKFold
+from keras.callbacks import EarlyStopping
 
 # from sklearn.model_selection import cross_val_score
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
@@ -121,7 +122,7 @@ np.random.seed(seed)
 
 	
 # load dataset
-dataframe = pandas.read_csv("data/mfcc_new.csv", header=None)
+dataframe = pandas.read_csv("data/NewMFCCFeaturesWpadding.csv", header=None)   #NewMFCCFeaturesWpadding
 dataset = dataframe.values
 np.random.shuffle(dataset)
 # print(dataset)
@@ -136,76 +137,64 @@ Y = dataset[:,12337]
 # train = np.load('data/Train_LSTM.npy')   # Load training data set
 # test = np.load('data/LSTM_labels.npy')    # Load training lable set
 
-
+labels = np_utils.to_categorical(Y,6)
 
 print(X.shape)
-# print(labels.shape)
-# print(type(labels))
+print(labels.shape)
 
 # Suffle data set
 # X, y = shuffle(train, labels)
 
 # Split train and test data sets
-# X_train, X_test, y_train, y_test = train_test_split(
-    # X, labels, test_size=0.3, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, labels, test_size=0.2, random_state=42)
 
 class_weights = class_weight.compute_class_weight('balanced',np.unique(Y),Y)
 
 print(class_weights)
 
-kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
-# print(dataframe)
-# print(Y)
-# encoder = LabelEncoder()
 
-# # print(X)
+model = Sequential()
+model.add(Dense(7500 ,input_dim=12337, activation='relu',kernel_regularizer=regularizers.l2(0.01))) #500   #kernel_regularizer=regularizers.l2(0.1),
+model.add(Dropout(0.35))                      #0.5
+# # model.add(Dense(700,activation='relu'))      #this is not here
+# # model.add(Dropout(0.25))                       #this is not there
+# model.add(Dense(500,activation='relu',kernel_regularizer=regularizers.l2(0.01)))      #this is not here
+# model.add(Dropout(0.35))                       #this is not there
+# model.add(Dense(500,activation='relu',kernel_regularizer=regularizers.l2(0.01)))     #200
+# model.add(Dropout(0.35))                            #this is not there
+# model.add(Dense(500,activation='relu',kernel_regularizer=regularizers.l2(0.01)))   #100
+# model.add(Dropout(0.25))                    #0.25
+# model.add(Dense(80,activation='relu',kernel_regularizer=regularizers.l2(0.01)))  #80
+model.add(Dense(6,activation='softmax'))    #6
 
-# encoder.fit(Y)
-# encoded_Y = encoder.transform(Y)
-# # convert integers to dummy variables (i.e. one hot encoded)
-# dummy_y = np_utils.to_categorical(encoded_Y)
+sgd = SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
 
-cvscorces = []
+model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
 
-for train,test in kfold.split(X,Y):
-    train_labels = np_utils.to_categorical(Y[train],6)
-    test_labels = np_utils.to_categorical(Y[test],6)
-    model = Sequential()
-    model.add(Dense(500 ,input_dim=12337,kernel_regularizer=regularizers.l2(0.1), activation='relu'))   #500   #kernel_regularizer=regularizers.l2(0.1),
-    model.add(Dropout(0.25))
-    model.add(Dense(200,activation='relu'))      #200
-    # model.add(Dropout(0.1))   
-    model.add(Dense(100,activation='relu'))     #100
-    model.add(Dropout(0.25))                    #0.25
-    model.add(Dense(80,activation='relu'))      #80
-    model.add(Dense(6,activation='softmax'))    #6
+model.summary()
 
-    sgd = SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
+filepath = "best.weights.hd5"
+checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
 
-    model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
+callbacklist   = [checkpoint,EarlyStopping(monitor='val_err',patience=2)]
 
-    model.summary()
+results = model.fit(X_train,y_train,batch_size=128 , epochs=60, callbacks=callbacklist,class_weight=class_weights, validation_data=(X_test,y_test)); #64
 
-    # filepath = "best.weights.hd5"
-    # checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
 
-    # callbacklist   = [checkpoint]
+# model.evaluate(X,dummy_y,batch_size=5)
 
-    results = model.fit(X[train],train_labels,batch_size=64 , epochs=60, class_weight=class_weights,verbose=0); #64
-    scores = model.evaluate(X[test],test_labels, verbose=0)   
+# print(model.predict(test_x))
+# print(test_y)
 
-    cvscorces.append(scores[1]*100)
-
-# plot_history(results)
+plot_history(results)
 
 # score = model.evaluate(test_x,test_y);
 
-# full_multiclass_report(model,X_train,y_train,[0,1,2,3,4,5])
+full_multiclass_report(model,X_train,y_train,[0,1,2,3,4,5])
 
-# full_multiclass_report(model,X_test,y_test,[0,1,2,3,4,5])
+full_multiclass_report(model,X_test,y_test,[0,1,2,3,4,5])
 
-# model.save('new_model.h5')
+model.save('new_model.h5')
 
-# print(np.mean(results.history["val_acc"]))
-
-print(cvscorces)
+print(np.mean(results.history["val_acc"]))
