@@ -14,7 +14,7 @@ X = dataset[:,0:12337].astype(float)  #186576  7150
 Y = dataset[:,12337]
 
 # Spliting test train
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
 dtrain = xgb.DMatrix(X_train, label=y_train) 
 dtest = xgb.DMatrix(X_test, label=y_test)
@@ -22,10 +22,10 @@ dtest = xgb.DMatrix(X_test, label=y_test)
 #Define  params for XGboost
 
 params = {
-    'max-depth' : 5,
-    'eta' : 0.1,
+    'max-depth' : 8,
+    'eta' : 0.01,
     'silent' : 0,
-    'objective' : 'multi:softmax',
+    'objective' : 'multi:softprob',
     'num_class' : 6 
 }
 

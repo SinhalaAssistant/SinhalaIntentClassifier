@@ -1,3 +1,4 @@
+
 import pandas
 import numpy as np
 import itertools
@@ -11,6 +12,7 @@ from sklearn.utils  import class_weight
 from keras.callbacks import ModelCheckpoint
 from keras import regularizers
 from sklearn.model_selection import StratifiedKFold
+from keras.callbacks import EarlyStopping
 
 # from sklearn.model_selection import cross_val_score
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
@@ -150,21 +152,22 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 class_weights = class_weight.compute_class_weight('balanced',np.unique(Y),Y)
 
+print("#Class Weights for unbalanced data")
 print(class_weights)
 
 
 model = Sequential()
-model.add(Dense(1000 ,input_dim=12337, activation='relu'))   #500   #kernel_regularizer=regularizers.l2(0.1),
-model.add(Dropout(0.35))                      #0.5
-# model.add(Dense(700,activation='relu'))      #this is not here
-# model.add(Dropout(0.25))                       #this is not there
-model.add(Dense(500,activation='relu'))      #this is not here
+model.add(Dense(1000 ,input_dim=12337, activation='relu',kernel_regularizer=regularizers.l1(0.001))) #500   #kernel_regularizer=regularizers.l2(0.1),
+model.add(Dropout(0.4))                      #0.4
+# model.add(Dense(500,activation='relu'))      #this is not here
+# model.add(Dropout(0.35))                       #this is not there
+model.add(Dense(500,activation='relu', kernel_regularizer=regularizers.l2(0.01)))      #this is not here l2 500
 model.add(Dropout(0.35))                       #this is not there
-model.add(Dense(200,activation='relu'))      #200
+model.add(Dense(500,activation='relu',kernel_regularizer=regularizers.l2(0.01)))     #200
 model.add(Dropout(0.35))                            #this is not there
-model.add(Dense(100,activation='relu'))     #100
+model.add(Dense(500,activation='relu',kernel_regularizer=regularizers.l2(0.01)))   #100
 model.add(Dropout(0.25))                    #0.25
-model.add(Dense(80,activation='relu'))      #80
+model.add(Dense(100,activation='relu',kernel_regularizer=regularizers.l2(0.01)))  #80
 model.add(Dense(6,activation='softmax'))    #6
 
 sgd = SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
@@ -176,9 +179,10 @@ model.summary()
 filepath = "best.weights.hd5"
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
 
-callbacklist   = [checkpoint]
+callbacklist = [checkpoint]
 
-results = model.fit(X_train,y_train,batch_size=128 , epochs=60, callbacks=callbacklist,class_weight=class_weights, validation_data=(X_test,y_test)); #64
+results = model.fit(X_train,y_train,batch_size=128 , epochs=120, callbacks=callbacklist,class_weight=class_weights, validation_data=(X_test,y_test)); #64
+
 
 # model.evaluate(X,dummy_y,batch_size=5)
 

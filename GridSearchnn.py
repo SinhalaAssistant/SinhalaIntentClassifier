@@ -55,8 +55,8 @@ labels = np_utils.to_categorical(Y,6)
 
 model = KerasClassifier(build_fn=create_model)
 
-epochs = [50,100,150,200,250]
-batch_size = [32,64,128,256]
+epochs = [50]
+batch_size = [32,64]
 
 param_grid = dict(batch_size=batch_size, epochs=epochs)
 

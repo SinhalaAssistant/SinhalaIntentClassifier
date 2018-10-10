@@ -6,6 +6,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from sklearn.model_selection import train_test_split
 from keras.wrappers.scikit_learn import KerasClassifier
+from keras.layers.normalization import BatchNormalization
 from keras.utils import np_utils
 from keras import regularizers
 # from sklearn.model_selection import cross_val_score
@@ -157,14 +158,15 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 
 model = Sequential()
-model.add(Dense(500 ,input_dim=12337,kernel_regularizer=regularizers.l2(0.01), activation='relu'))   #500
+model.add(Dense(1000 ,input_dim=12337,kernel_regularizer=regularizers.l2(0.01), activation='relu'))   #500
 model.add(Dropout(0.6))
-model.add(Dense(300,activation='relu'))      #200
+model.add(Dense(700,activation='relu'))      #200
 model.add(Dropout(0.5))
-model.add(Dense(200,activation='relu'))      #200
+model.add(Dense(400,activation='relu'))      #200
 model.add(Dropout(0.4))
 model.add(Dense(100,activation='relu'))     #100
-model.add(Dropout(0.25))                    #0.25
+model.add(Dropout(0.25))  
+model.add(BatchNormalization())                  #0.25
 model.add(Dense(80,activation='relu'))      #80
 model.add(Dense(6,activation='softmax'))    #6
 
