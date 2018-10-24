@@ -1,0 +1,6 @@
+xgboost : {    //without gamma and min_weigth_child
+    eta : ,
+    max_depth : 15,
+    bytetree : ,
+    
+}
